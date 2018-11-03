@@ -1,0 +1,180 @@
+PROGRAM         : COMPSTMT
+
+TERM            : ";"
+                | "\n" //a newline can terminate a statement  T represents a terminator to end a statement
+
+COMPSTMT        : STMT {TERM EXPR} [TERM]         // a statement or zero or more (terminator expression)
+                | STMT TERM_EXPR_LIST
+                | STMT TERM_EXPR_LIST TERM
+
+TERM_EXPR_LIST: | TERM EXPR
+
+
+STMT            : CALL  // means to construct a  function 
+                | STMT if EXPR
+                | STMT while EXPR
+                | EXPR
+
+
+EXPR            : MLHS = MRHS
+                | return CALL_ARGS
+                | EXPR and EXPR
+                | EXPR or EXPR
+                | not EXPR
+                | COMMAND
+                | ! COMMAND
+                | ARG
+               
+
+CALL            : FUNCTION
+                | COMMAND
+               
+
+COMMAND         : OPERATION CALL_ARGS
+                | PRIMARY.OPERATION CALL_ARGS      // ask
+
+
+FUNCTION        : OPERATION ["(" [CALL_ARGS] ")"]//
+                | OPERATION
+                | OPERATION "(" CALL_ARGS")"
+                | OPERATION "(" ")"
+                | for BLOCK_VAR in EXPR DO     // come back to it later  and add to flex file
+                    COMPSTMT
+                  end
+                | def FNAME ARGDECL         // this is grammar for a function 
+                    COMPSTMT
+                  end
+
+
+WHEN_ARGS       : ARGS [, * ARG] | * ARG
+
+
+THEN            : TERM | then | TERM then //"then" and "do" can go on next line
+
+DO              : TERM | do | TERM do
+
+
+BLOCK_VAR       : LHS | MLHS
+
+
+MLHS            : MLHS_ITEM , [MLHS_ITEM (, MLHS_ITEM)*] [* [LHS]]
+                | * LHS
+
+
+MLHS_ITEM       : LHS | "(" MLHS ")"
+
+
+LHS             : VARIABLE
+                | PRIMARY "[" [ARGS] "]"
+
+
+MRHS            : ARGS [, * ARG] | * ARG
+
+
+CALL_ARGS       : ARGS
+                | ARGS [, * ARG] [, & ARG]
+                | * ARG [, & ARG] | & ARG
+                | COMMAND
+
+
+ARGS            : ARG (, ARG)*
+;
+
+ARG             : LHS = ARG
+                | LHS OP_ASGN ARG
+                | ARG '..' ARG
+                | ARG '...' ARG
+                | ARG + ARG | ARG - ARG | ARG * ARG | ARG / ARG
+                | + ARG | - ARG
+                | ARG "|" ARG
+                | ARG > ARG | ARG >= ARG | ARG < ARG | ARG <= ARG
+                | ARG == ARG | ARG != ARG
+                | ! ARG
+                | ARG && ARG | ARG || ARG
+                | PRIMARY
+;
+
+PRIMARY         : "(" COMPSTMT ")"
+                | LITERAL
+                | VARIABLE
+                | PRIMARY "[" [ARGS] "]"
+                | "[" [ARGS [,]] "]"
+                | "{" [ARGS | ASSOCS [,]] "}"
+                | return ["(" [CALL_ARGS] ")"]
+                | defined? "(" ARG ")"
+                | FUNCTION
+                | FUNCTION "{" ["|" [BLOCK_VAR] "|"] COMPSTMT "}"
+                | if EXPR THEN     // if takes an expression  a then block  etc
+                    COMPSTMT
+                  {elsif EXPR THEN
+                    COMPSTMT}
+                  [else
+                    COMPSTMT]
+                  end
+                | while EXPR DO COMPSTMT end
+
+
+ARGDECL         : "(" ARGLIST ")"       
+                | ARGLIST T
+
+
+ARGLIST         : IDENTIFIER(,IDENTIFIER)*
+
+
+
+VARIABLE        : VARNAME
+
+
+LITERAL         : numeric-literal | SYMBOL | STRING-LITERAL
+
+
+The following are recognized by the lexical analyzer.
+OP_ASGN         : = 
+
+SYMBOL          : :FNAME | :VARNAME
+
+
+FNAME           : IDENTIFIER | ".."| "|" | & | <=> | == 
+                | > | >= | < | + | - | * | / 
+
+
+OPERATION       : IDENTIFIER [! | ?]      // array.sort!      [1, 2, 3].include?(1)   method only identifier
+
+
+VARNAME         : IDENTIFIER
+
+
+STRING-LITERAL          : DOUBLE_QUOTED_STRING
+                | SINGLE_QUOTED_STRING
+
+
+                
+
+
+while conditional [do]
+   code
+end
+are virtually the same thing
+until conditional [do]
+   code
+end
+
+what does * mean , also []  and {}
+
+difference in using  return tLPAREN  and yytext[0];
+what if token is already defined with regex in the flex file ????
+
+unary plus, and unary minus
+
+On the table distribution :   there is integer (1 type ) what does it mean just base 10 or other bases
+can we use regex for left hand side of identifier or other non-terminals ?
+Also alternatives like using if is the same as using until 
+unless foo?
+    # blabla
+end
+ same thing
+if !foo?
+    # blabla
+end
+
+concerning block also.
