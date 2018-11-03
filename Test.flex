@@ -86,7 +86,7 @@ EXPONENT	 	(({NUM}|{FLOAT})[eE][+-]?{NUM})
 "def"       {printf("Found Keyword :\"%s\" in line %d\n", "DEF",yylineno);}
 "break"      {printf("Found Keyword :\"%s\" in line %d\n", "BREAK",yylineno);}
 "when"      {printf("Found Keyword :\"%s\" in line %d\n", "WHEN",yylineno);}
-"case"      {printf("Found Keyword :\"%s\" in line %d\n", "CASE",yylineno);}
+"in"        {printf("Found Keyword :\"%s\" in line %d\n", "IN",yylineno);}
 
 \+ 		{printf("Found arithmetic operator :\"%s\" in line %d\n", yytext,yylineno);}
 \- 		{printf("Found arithmetic operator :\"%s\" in line %d\n", yytext,yylineno);}
@@ -123,7 +123,8 @@ EXPONENT	 	(({NUM}|{FLOAT})[eE][+-]?{NUM})
 "]" 					{ printf("Found closed square bracket symbol \"%s\" in line %d\n", yytext,yylineno); }
 "." 					{ printf("Found symbol \"%s\" in line %d\n", yytext,yylineno); }
 "," 					{ printf("Found symbol \"%s\" in line %d\n", yytext,yylineno); }
-"?" 					{ printf("Found symbol \"%s\" in line %d\n", yytext,yylineno); }
+".."                    { printf("Found symbol \"%s\" in line %d\n", yytext,yylineno); }
+"..."                   { printf("Found symbol \"%s\" in line %d\n", yytext,yylineno); }
 
 {BOOLEAN}  {printf("Found boolean : \"%s\" in line %d\n", yytext,yylineno);}
 {IDENTIFIER} {printf("Found an identifier: \"%s\" in line %d\n", yytext,yylineno);}
