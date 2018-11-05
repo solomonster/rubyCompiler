@@ -1,23 +1,27 @@
 PROGRAM         : COMPSTMT
 
+COMPSTMT        : STMTS OPT_TERMS
+
+STMTS           : NONE
+                | STMT
+                | STMTS TERMS STMT
+
+OPT_TERMS       : 
+                | TERMS
+
+TERMS           : TERM
+                | TERMS ';'
+
 TERM            : ";"
-                | "\n" //a newline can terminate a statement  T represents a terminator to end a statement
+                | "\n" 
 
-COMPSTMT        : STMT {TERM EXPR} [TERM]         // a statement or zero or more (terminator expression)
-                | STMT TERM_EXPR_LIST
-                | STMT TERM_EXPR_LIST TERM
-
-TERM_EXPR_LIST: | TERM EXPR
-
-
-STMT            : CALL  // means to construct a  function 
+STMT            : CALL  
                 | STMT if EXPR
                 | STMT while EXPR
                 | EXPR
 
 
-EXPR            : MLHS = MRHS
-                | return CALL_ARGS
+EXPR            : return CALL_ARGS
                 | EXPR and EXPR
                 | EXPR or EXPR
                 | not EXPR
@@ -31,54 +35,43 @@ CALL            : FUNCTION
                
 
 COMMAND         : OPERATION CALL_ARGS
-                | PRIMARY.OPERATION CALL_ARGS      // ask
+                | PRIMARY.OPERATION CALL_ARGS   
 
 
-FUNCTION        : OPERATION ["(" [CALL_ARGS] ")"]//
-                | OPERATION
+FUNCTION        : OPERATION 
                 | OPERATION "(" CALL_ARGS")"
                 | OPERATION "(" ")"
-                | for BLOCK_VAR in EXPR DO     // come back to it later  and add to flex file
+                | for BLOCK_VAR in EXPR DO   
                     COMPSTMT
                   end
-                | def FNAME ARGDECL         // this is grammar for a function 
+                | def FNAME ARGDECL       
                     COMPSTMT
                   end
 
+THEN            : TERM 
+                | then 
+                | TERM then 
 
-WHEN_ARGS       : ARGS [, * ARG] | * ARG
-
-
-THEN            : TERM | then | TERM then //"then" and "do" can go on next line
-
-DO              : TERM | do | TERM do
-
-
-BLOCK_VAR       : LHS | MLHS
+DO              : TERM 
+                | do 
+                | TERM do
 
 
-MLHS            : MLHS_ITEM , [MLHS_ITEM (, MLHS_ITEM)*] [* [LHS]]
-                | * LHS
+BLOCK_VAR       : LHS 
 
-
-MLHS_ITEM       : LHS | "(" MLHS ")"
-
-
-LHS             : VARIABLE
-                | PRIMARY "[" [ARGS] "]"
-
-
-MRHS            : ARGS [, * ARG] | * ARG
+LHS             : VARIABLE                    
+                | PRIMARY "[" "]"
+                | PRIMARY "["ARGS"]"
 
 
 CALL_ARGS       : ARGS
-                | ARGS [, * ARG] [, & ARG]
-                | * ARG [, & ARG] | & ARG
                 | COMMAND
 
+ARGS            :ARG
+                |ARG COMMA_ARG_LIST
 
-ARGS            : ARG (, ARG)*
-;
+COMMA_ARG_LIST  :,ARG
+                | ,ARG COMMA_ARG_LIST
 
 ARG             : LHS = ARG
                 | LHS OP_ASGN ARG
@@ -86,25 +79,25 @@ ARG             : LHS = ARG
                 | ARG '...' ARG
                 | ARG + ARG | ARG - ARG | ARG * ARG | ARG / ARG
                 | + ARG | - ARG
-                | ARG "|" ARG
                 | ARG > ARG | ARG >= ARG | ARG < ARG | ARG <= ARG
                 | ARG == ARG | ARG != ARG
                 | ! ARG
                 | ARG && ARG | ARG || ARG
                 | PRIMARY
-;
 
-PRIMARY         : "(" COMPSTMT ")"
-                | LITERAL
-                | VARIABLE
-                | PRIMARY "[" [ARGS] "]"
-                | "[" [ARGS [,]] "]"
-                | "{" [ARGS | ASSOCS [,]] "}"
-                | return ["(" [CALL_ARGS] ")"]
-                | defined? "(" ARG ")"
+
+PRIMARY         : "(" COMPSTMT ")"         
+                | LITERAL            
+                | VARIABLE               
+                |PRIMARY "[" "]"
+                |PRIMARY "[" ARGS "]"   
+                |"[" "]"
+                |"["ARGS"]"
+                | return 
                 | FUNCTION
-                | FUNCTION "{" ["|" [BLOCK_VAR] "|"] COMPSTMT "}"
-                | if EXPR THEN     // if takes an expression  a then block  etc
+                |FUNCTION "{"COMPSTMT"}"
+                |FUNCTION "{""|"BLOCK_VAR"|"COMPSTMT"}"
+                | if EXPR THEN     
                     COMPSTMT
                   {elsif EXPR THEN
                     COMPSTMT}
@@ -115,66 +108,37 @@ PRIMARY         : "(" COMPSTMT ")"
 
 
 ARGDECL         : "(" ARGLIST ")"       
-                | ARGLIST T
+                | ARGLIST TERM
 
 
-ARGLIST         : IDENTIFIER(,IDENTIFIER)*
+ARGLIST        :IDENTIFIER
+               |ARGLIST,IDENTIFIER 
 
 
 
 VARIABLE        : VARNAME
 
 
-LITERAL         : numeric-literal | SYMBOL | STRING-LITERAL
+LITERAL         : numeric-literal 
+                | STRING-LITERAL
 
-
-The following are recognized by the lexical analyzer.
 OP_ASGN         : = 
 
-SYMBOL          : :FNAME | :VARNAME
 
 
 FNAME           : IDENTIFIER | ".."| "|" | & | <=> | == 
                 | > | >= | < | + | - | * | / 
 
 
-OPERATION       : IDENTIFIER [! | ?]      // array.sort!      [1, 2, 3].include?(1)   method only identifier
-
+OPERATION       : IDENTIFIER  
 
 VARNAME         : IDENTIFIER
 
-
-STRING-LITERAL          : DOUBLE_QUOTED_STRING
-                | SINGLE_QUOTED_STRING
+STRING-LITERAL  : STRING
 
 
                 
 
 
-while conditional [do]
-   code
-end
-are virtually the same thing
-until conditional [do]
-   code
-end
 
-what does * mean , also []  and {}
 
-difference in using  return tLPAREN  and yytext[0];
-what if token is already defined with regex in the flex file ????
-
-unary plus, and unary minus
-
-On the table distribution :   there is integer (1 type ) what does it mean just base 10 or other bases
-can we use regex for left hand side of identifier or other non-terminals ?
-Also alternatives like using if is the same as using until 
-unless foo?
-    # blabla
-end
- same thing
-if !foo?
-    # blabla
-end
-
-concerning block also.
