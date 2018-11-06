@@ -25,7 +25,7 @@ EXPR            : return CALL_ARGS
                 | EXPR and EXPR
                 | EXPR or EXPR
                 | not EXPR
-                | COMMAND
+                | COMMAND             // method calls  without parenthesis
                 | ! COMMAND
                 | ARG
                
@@ -34,13 +34,13 @@ CALL            : FUNCTION
                 | COMMAND
                
 
-COMMAND         : OPERATION CALL_ARGS
-                | PRIMARY.OPERATION CALL_ARGS   
+COMMAND         : IDENTIFIER CALL_ARGS
+                | PRIMARY.IDENTIFIER CALL_ARGS   
 
 
-FUNCTION        : OPERATION 
-                | OPERATION "(" CALL_ARGS")"
-                | OPERATION "(" ")"
+FUNCTION        : IDENTIFIER 
+                | IDENTIFIER "(" CALL_ARGS")"
+                | IDENTIFIER "(" ")"
                 | for BLOCK_VAR in EXPR DO   
                     COMPSTMT
                   end
@@ -74,7 +74,6 @@ COMMA_ARG_LIST  :,ARG
                 | ,ARG COMMA_ARG_LIST
 
 ARG             : LHS = ARG
-                | LHS OP_ASGN ARG
                 | ARG '..' ARG
                 | ARG '...' ARG
                 | ARG + ARG | ARG - ARG | ARG * ARG | ARG / ARG
@@ -95,8 +94,6 @@ PRIMARY         : "(" COMPSTMT ")"
                 |"["ARGS"]"
                 | return 
                 | FUNCTION
-                |FUNCTION "{"COMPSTMT"}"
-                |FUNCTION "{""|"BLOCK_VAR"|"COMPSTMT"}"
                 | if EXPR THEN     
                     COMPSTMT
                   {elsif EXPR THEN
@@ -115,22 +112,15 @@ ARGLIST        :IDENTIFIER
                |ARGLIST,IDENTIFIER 
 
 
-
 VARIABLE        : VARNAME
 
 
 LITERAL         : numeric-literal 
                 | STRING-LITERAL
 
-OP_ASGN         : = 
-
-
 
 FNAME           : IDENTIFIER | ".."| "|" | & | <=> | == 
                 | > | >= | < | + | - | * | / 
-
-
-OPERATION       : IDENTIFIER  
 
 VARNAME         : IDENTIFIER
 
