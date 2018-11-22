@@ -12,38 +12,77 @@ OPT_TERMS       :
 TERMS           : TERM
                 | TERMS ';'
 
-TERM            : ";"
-                | "\n" 
+TERM            : ';'
+                | '\n' 
 
-STMT            : CALL  
-                | STMT if EXPR
+STMT            : STMT if EXPR
                 | STMT while EXPR
                 | EXPR
+                | return
+                | return CALL_ARGS
+                | STMT-IF
+                | STMT-WHILE 
+                | FUNCTION 
 
+STMT-IF         :if EXPR THEN     
+                    COMPSTMT
+                  IF-TAIL
+                  end
 
-EXPR            : return CALL_ARGS
+IF-TAIL         : OPT-ELSE
+                |ELSIF EXPR THEN
+                   COMPSTMT
+                 IF-TAIL
+
+OPT-ELSE        :NONE
+                |ELSE CMPSTMT  
+
+STMT-WHILE      : while EXPR DO COMPSTMT end                
+
+DO              : TERM 
+                | do 
+                | TERM do
+                           
+
+EXPR            : INT-LITERAL
+                | STRING-LITERAL
+                | VARIABLE
+                | '[' ']'
                 | EXPR and EXPR
                 | EXPR or EXPR
                 | not EXPR
-                | COMMAND             // method calls  without parenthesis
-                | ! COMMAND
+                | LHS = EXPR
+                | EXPR tDOT2 EXPR
+                | EXPR tDOT3 EXPR
+                | EXPR tOROP EXPR
+                | EXPR tANDOP EXPR 
+                | EXPR '+' EXPR 
+                | EXPR '-' EXPR 
+                | EXPR '*' EXPR 
+                | EXPR '/' EXPR
+                | tUPLUS EXPR 
+                | tMINUS EXPR
+                | EXPR '>' EXPR 
+                | EXPR tGEQ EXPR 
+                | EXPR '<' EXPR 
+                | EXPR tLEQ EXPR
+                | EXPR tEQ EXPR 
+                | EXPR tNEQ EXPR
+                | '!' EXPR
+                | COMMAND            
+                | '!' COMMAND
                 | ARG
-               
+                | PRIMARY
+                
 
-CALL            : FUNCTION
-                | COMMAND
-               
+          
 
 COMMAND         : IDENTIFIER CALL_ARGS
-                | PRIMARY.IDENTIFIER CALL_ARGS   
-
+     
 
 FUNCTION        : IDENTIFIER 
-                | IDENTIFIER "(" CALL_ARGS")"
-                | IDENTIFIER "(" ")"
-                | for BLOCK_VAR in EXPR DO   
-                    COMPSTMT
-                  end
+                | IDENTIFIER '(' ')'
+                | IDENTIFIER '(' CALL_ARGS')'
                 | def FNAME ARGDECL       
                     COMPSTMT
                   end
@@ -52,12 +91,7 @@ THEN            : TERM
                 | then 
                 | TERM then 
 
-DO              : TERM 
-                | do 
-                | TERM do
 
-
-BLOCK_VAR       : LHS 
 
 LHS             : VARIABLE                    
                 | PRIMARY "[" "]"
@@ -68,40 +102,19 @@ CALL_ARGS       : ARGS
                 | COMMAND
 
 ARGS            :ARG
-                |ARG COMMA_ARG_LIST
+                |ARGS ',' ARG
 
-COMMA_ARG_LIST  :,ARG
-                | ,ARG COMMA_ARG_LIST
-
-ARG             : LHS = ARG
-                | ARG '..' ARG
-                | ARG '...' ARG
-                | ARG + ARG | ARG - ARG | ARG * ARG | ARG / ARG
-                | + ARG | - ARG
-                | ARG > ARG | ARG >= ARG | ARG < ARG | ARG <= ARG
-                | ARG == ARG | ARG != ARG
-                | ! ARG
-                | ARG && ARG | ARG || ARG
-                | PRIMARY
+ARG             :NONE
+                |
 
 
-PRIMARY         : "(" COMPSTMT ")"         
-                | LITERAL            
-                | VARIABLE               
-                |PRIMARY "[" "]"
-                |PRIMARY "[" ARGS "]"   
+PRIMARY         :'(' COMPSTMT ')'                              
+                |PRIMARY '[' ']'                
+                |PRIMARY '[' ARGS ']'   
                 |"[" "]"
                 |"["ARGS"]"
                 | return 
-                | FUNCTION
-                | if EXPR THEN     
-                    COMPSTMT
-                  {elsif EXPR THEN
-                    COMPSTMT}
-                  [else
-                    COMPSTMT]
-                  end
-                | while EXPR DO COMPSTMT end
+                
 
 
 ARGDECL         : "(" ARGLIST ")"       
@@ -115,16 +128,12 @@ ARGLIST        :IDENTIFIER
 VARIABLE        : VARNAME
 
 
-LITERAL         : numeric-literal 
-                | STRING-LITERAL
-
-
-FNAME           : IDENTIFIER | ".."| "|" | & | <=> | == 
+FNAME           : IDENTIFIER | '..'| '==' 
                 | > | >= | < | + | - | * | / 
 
 VARNAME         : IDENTIFIER
 
-STRING-LITERAL  : STRING
+
 
 
                 
