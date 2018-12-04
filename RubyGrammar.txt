@@ -15,45 +15,29 @@ TERMS           : TERM
 TERM            : ';'
                 | '\n' 
 
-STMT            : STMT if EXPR
-                | STMT while EXPR
-                | EXPR
+STMT            : 
+                | put EXPR
                 | return
                 | return CALL_ARGS
-                | STMT-IF
-                | STMT-WHILE 
-                | FUNCTION 
+                | EXPR                         
 
-STMT-IF         :if EXPR THEN     
-                    COMPSTMT
-                  IF-TAIL
-                  end
 
-IF-TAIL         : OPT-ELSE
-                |ELSIF EXPR THEN
-                   COMPSTMT
-                 IF-TAIL
+/* In ruby unlike other languages if , while are expressons , they return value
+for example minimum = if x < y then x else y end
+while loop and method definition return nil so they are part of expr
+in ruby functions return value so they are expressions
 
-OPT-ELSE        :NONE
-                |ELSE CMPSTMT  
-
-STMT-WHILE      : while EXPR DO COMPSTMT end                
-
-DO              : TERM 
-                | do 
-                | TERM do
-                           
+*/
 
 EXPR            : INT-LITERAL
                 | STRING-LITERAL
                 | VARIABLE
-                | '[' ']'
-                | EXPR and EXPR
-                | EXPR or EXPR
-                | not EXPR
                 | LHS = EXPR
-                | EXPR tDOT2 EXPR
-                | EXPR tDOT3 EXPR
+                | '[' ']'
+                |'['ARGS']'
+                | EXPR and EXPR   /* logical-expression
+                | EXPR or EXPR
+                | not EXPR         */
                 | EXPR tOROP EXPR
                 | EXPR tANDOP EXPR 
                 | EXPR '+' EXPR 
@@ -69,67 +53,75 @@ EXPR            : INT-LITERAL
                 | EXPR tEQ EXPR 
                 | EXPR tNEQ EXPR
                 | '!' EXPR
+                | IF-EXPR
+                | WHILE-EXPR
+                | FUNCTION-DECLARATION
+                | '(' COMPSTMT ')' 
+                | EXPR '[' ']'                
+                | EXPR '[' ARGS ']'
                 | COMMAND            
                 | '!' COMMAND
-                | ARG
                 | PRIMARY
                 
-
-          
-
-COMMAND         : IDENTIFIER CALL_ARGS
-     
-
-FUNCTION        : IDENTIFIER 
-                | IDENTIFIER '(' ')'
-                | IDENTIFIER '(' CALL_ARGS')'
-                | def FNAME ARGDECL       
+IF-EXPR         :if EXPR THEN     
                     COMPSTMT
+                  IF-TAIL
                   end
+
+IF-TAIL         : OPT-ELSE
+                |ELSIF EXPR THEN
+                   COMPSTMT
+                 IF-TAIL
+
+OPT-ELSE        :NONE
+                |ELSE CMPSTMT  
+          
+WHILE-EXPR      : while EXPR DO COMPSTMT end                
+
+DO              : TERM 
+                | do 
+                | TERM do
 
 THEN            : TERM 
                 | then 
                 | TERM then 
 
 
+// Function call 
+COMMAND         : IDENTIFIER
+                | IDENTIFIER CALL_ARGS  
+                | IDENTIFIER '('CALL_ARGS_LIST')' 
 
+CALL_ARGS_LIST  : NONE
+                | ARGS
+
+ARGS            : EXPR
+                |ARGS ',' EXPR
+
+
+
+// function declaration
+FUNCTION-DECLARATION  :def FNAME ARGDECL
+                          COMPSTMT
+                        end 
+                        
 LHS             : VARIABLE                    
                 | PRIMARY "[" "]"
                 | PRIMARY "["ARGS"]"
 
 
-CALL_ARGS       : ARGS
-                | COMMAND
-
-ARGS            :ARG
-                |ARGS ',' ARG
-
-ARG             :NONE
-                |
-
-
-PRIMARY         :'(' COMPSTMT ')'                              
-                |PRIMARY '[' ']'                
-                |PRIMARY '[' ARGS ']'   
-                |"[" "]"
-                |"["ARGS"]"
-                | return 
-                
-
-
-ARGDECL         : "(" ARGLIST ")"       
+ARGDECL         : '(' ARGLIST ')'       
                 | ARGLIST TERM
 
 
-ARGLIST        :IDENTIFIER
-               |ARGLIST,IDENTIFIER 
+ARGLIST        :EXPR
+               |ARGLIST ',' EXPR 
 
 
 VARIABLE        : VARNAME
 
 
-FNAME           : IDENTIFIER | '..'| '==' 
-                | > | >= | < | + | - | * | / 
+FNAME           : IDENTIFIER 
 
 VARNAME         : IDENTIFIER
 
