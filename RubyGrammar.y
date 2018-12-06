@@ -1,122 +1,119 @@
+//Operator precedence should be from lowest to highest
+
+
+%nonassoc IF  WHILE
+%left AND OR
+%right NOT
+%right '='
+%left '<' tLEQ '>' tGEQ
+%left '+' '-'
+%left '*' '/'
+%right tUMINUS
+%right '!' tUPLUS
+%nonassoc ']'
+
+
+
 %%
 
-PROGRAM         : COMPSTMT
+program         : compstmt
 
-COMPSTMT        : STMTS OPT_TERMS
+compstmt        : stmt_list opt_terms
 
-STMTS           : /*empty*/
-                | STMT
-                | STMTS TERMS STMT
+stmt_list          : /*empty*/
+                | stmt
+                | stmt_list terms stmt
 
-OPT_TERMS       :/*empty*/ 
+opt_terms       :/*empty*/ 
                 | TERMS
 
-TERMS           : TERM
-                | TERMS ';'
+terms           : term
+                | terms ';'
 
 TERM            : ';'
-                | '\n' 
+                | ENDL 
 
-STMT            : /*empty*/                         // Confirm whether if and while loop should be in statement
-                | put EXPR
-                | return
-                | return CALL_ARGS_LIST
-                | LHS '=' COMMAND 
-                | EXPR                         
+stmt            : /*empty*/                         // Confirm whether if and while loop should be in statement
+                | PUT expr
+                | RETURN
+                | RETURN expr 
+                || func_decl
+                | expr                         
 
 
-/* In ruby unlike other languages if , while are expressons , they return value
-for example minimum = if x < y then x else y end
-while loop and method definition return nil so they are part of expr
-in ruby functions return value so they are expressions
-*/
 
-EXPR            : INT_LITERAL
+expr            : INT_LITERAL
                 | STRING_LITERAL
                 | IDENTIFIER
-                | LHS '=' EXPR
                 | '[' ']'
-                |'['ARGS']'
-                | EXPR and EXPR   /* logical-expression
-                | EXPR or EXPR
-                | not EXPR         */
-                | EXPR tOROP EXPR
-                | EXPR tANDOP EXPR 
-                | EXPR '+' EXPR 
-                | EXPR '-' EXPR 
-                | EXPR '*' EXPR 
-                | EXPR '/' EXPR
-                | tUPLUS EXPR 
-                | tMINUS EXPR
-                | EXPR '>' EXPR 
-                | EXPR tGEQ EXPR 
-                | EXPR '<' EXPR 
-                | EXPR tLEQ EXPR
-                | EXPR tEQ EXPR 
-                | EXPR tNEQ EXPR
-                | '!' EXPR
-                | IF_EXPR
-                | WHILE_EXPR
-                | FUNCTION_DECLARATION
-                | '(' COMPSTMT ')' 
-                | EXPR '[' ']'                
-                | EXPR '[' ARGS ']'
-                | COMMAND            
-                | '!' COMMAND
+                |'['args']'
+                | IF expr then compstmt if_tail END
+                | WHILE expr do compstmt END
+                | expr AND expr  
+                | expr OR expr
+                | NOT expr  
+                | lhs '=' expr  
+                | expr '>' expr 
+                | expr tGEQ expr 
+                | expr '<' expr 
+                | expr tLEQ expr
+                | expr tEQ expr 
+                | expr tNEQ expr    
+                | expr '+' expr 
+                | expr '-' expr 
+                | expr '*' expr 
+                | expr '/' expr
+                | tUMINUS expr
+                | tUPLUS expr 
+                | '!' expr
+                | command            
+                | '(' compstmt ')' 
+                | expr '[' ']'                
+                | expr '[' expr ']'
                 
-IF_EXPR         :if EXPR THEN     
-                    COMPSTMT
-                  IF_TAIL
-                  end
+                
+if_tail         :/*empty*/
+                |ELSE compstmt
+                |ELSEIF expr then compstmt END if_tail
 
-IF_TAIL         : OPT_ELSE
-                |ELSIF EXPR THEN
-                   COMPSTMT
-                 IF_TAIL
+                         
+do              : term 
+                | DO 
+                | term DO
 
-OPT_ELSE        :NONE
-                |ELSE CMPSTMT  
-          
-WHILE_EXPR      : while EXPR DO COMPSTMT end                
-
-DO              : TERM 
-                | do 
-                | TERM do
-
-THEN            : TERM 
-                | then 
-                | TERM then 
+then            : term 
+                | THEN 
+                | term THEN 
 
 
 // Function call 
-COMMAND         : IDENTIFIER
+command        :  IDENTIFIER
                 | IDENTIFIER CALL_ARGS  
-                | IDENTIFIER '('CALL_ARGS_LIST')' 
+                | IDENTIFIER '('call_args_list')' 
 
-CALL_ARGS_LIST  : /*empty*/
-                | ARGS
+call_args_list  : /*empty*/
+                | args
 
-ARGS            : EXPR
-                |ARGS ',' EXPR
+args            : expr
+                |args ',' expr
 
 
 
-// function declaration
-FUNCTION_DECLARATION  :def IDENTIFIER ARGDECL
-                          COMPSTMT
-                        end 
+
+func_decl  :  DEF IDENTIFIER argdecl
+                compstmt
+              END 
                         
-LHS             : IDENTIFIER                    
-                | IDENTIFIER '[' ']'
-                | IDENTIFIER '['ARGS']'
+lhs             : IDENTIFIER                    
+                | IDENTIFIER expr
 
 
-ARGDECL         : '(' ARGLIST ')'       
-                | ARGLIST TERM
+argdecl         : '(' arg_list ')'       
+                | arg_list term
 
 
-ARGLIST        :EXPR
-               |ARGLIST ',' EXPR 
+arg_list        :expr
+               |arg_list ',' expr 
 
 
 %%
