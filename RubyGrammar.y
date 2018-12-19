@@ -35,29 +35,29 @@
 	struct List* list;
 }
 
+
+%start head
+
 %token <int_value> INT_LITERAL
 %token <string_value> STRING_LITERAL
 %token <string_value> IDENTIFIER
 
 %type <stmt> statement
 %type <stmt> function_definition
-%type <stmt> condition_statement
-%type <stmt> elif_statement
-%type <stmt> while_statement
-%type <stmt> return_statement
 
-%type <list> program
-%type <list> arguments_e
-%type <list> arguments
-%type <list> statement_list
-%type <list> suite
-%type <list> parameters_e
+%type <expr> expr
+%type <expr> command
+%type <expr> if_tail
+
+
+%type <list> stmts
 %type <list> parameters
-%type <list> elif_statement_list
+%type <list> args
+%type <list> call_args_list
+%type <list>  program
+
 
 %token RETURN
-%token NONE
-%token TRUE
 %token DEF
 %token WHILE
 %token AND
@@ -65,14 +65,13 @@
 %token ELIF
 %token IF
 %token OR
-
 %token ELSE
-
 %token TRUEDIV
 %token EG
 %token EL
 %token EQ
 %token NEQ
+%token END
 
 
 
@@ -86,27 +85,21 @@
 %left  '>' tGEQ '<' tLEQ
 %left '+' '-'
 %left '*' '/'
-%right '!' '~' tUPLUS tUMINUS
-%right '!' tUPLUS
-%nonassoc ']'
+%right  tUMINUS
+%right '!' tUPLUS 
+%nonassoc ']' ')'
 
 
 
 %%
 
-program         : compstmt
+program         : stmts								  { $$ = head = $1; printf("START"); }
 
-compstmt        : stmts opt_terms
-
-stmts           : /**empty*/                          {$$=$1;}
-                |stmt                                 { $$ = createList(LT_STATEMENT_LIST, NULL, $1); }
+stmts           :stmt                                 { $$ = createList(LT_STATEMENT_LIST, NULL, $1); }
                 |stmts terms stmt                     { $$ = appendToList($1, NULL, $2); }
 
-opt_terms       :/*empty*/ 
-                | TERMS
-
 terms           : term
-                | terms ';'
+                | terms term
 
 term            : ';'
                 | ENDL 
@@ -130,13 +123,9 @@ expr            : INT_LITERAL                           { $$ = createBaseTypeExp
                 
                 |'['args']'                           {$$=createArrayExpression($2);}
 
-                | IF expr then compstmt /*if_tail*/ END   {$$=createOnlyIfCondition($2,$4);}
+                | IF expr then stmts if_tail END       {$$=createOnlyIfCondition($2,$4);}
 
-                | IF expr then compstmt elsif_statement_list END   {$$ = createIfElsifCondition($2, $4, $5);}
-
-                | IF expr then compstmt elsif_statement_list ELSE compstmt END   {$$ = createIfElsifElseCondition($2, $4, $5, $7);}
-
-                | WHILE expr do compstmt END          {$$= createWhileStatement($2,$4);}
+                | WHILE expr do stmts END             {$$= createWhileStatement($2,$4);}
 
                 | expr AND expr                       { $$ = createBinaryExpression(ET_AND, $1, $3); }                             
                   
@@ -173,50 +162,50 @@ expr            : INT_LITERAL                           { $$ = createBaseTypeExp
 
                 | command                              { $$=$1;}
 
-                | '(' compstmt ')'                     { $$=$2; }
+                | '(' expr ')'                     { $$=$2; }
 
                 | expr '[' ']'                         { $$=createExpression(ET_ARRAY_ACCESS,$1,NULL);}
 
                 | expr '[' expr ']'                   { $$=createExpression(ET,_ARRAY_ACCESS,$1,$3);}
                 
                 
-/*if_tail         :/*empty*/
-                |ELSE compstmt
-                |ELSEIF expr then compstmt END if_tail*/
+if_tail         :/*empty*/
+                |ELSE stmts
+                |ELSEIF expr then stmts END if_tail
 
                          
-do              : term 
+do              : ENDL 
                 | DO 
-                | term DO
+                | ENDL DO
 
-then            : term 
+then            : ENDL 
                 | THEN 
-                | term THEN 
+                | ENDL THEN 
 
 
-command        :  IDENTIFIER                          { $$ = createExpression(ET_FUNC_CALL, $1, NULL, NULL, NULL, 0, NULL, NULL); }
-                | IDENTIFIER CALL_ARGS                { $$ = createExpression(ET_FUNC_CALL, $1, NULL, NULL, $2, 0, NULL, NULL); }
-                | IDENTIFIER '('call_args_list')'     { $$ = createExpression(ET_FUNC_CALL, $1, NULL, NULL, $3, 0, NULL, NULL); }
+command        : IDENTIFIER     call_args_list          { $$ = createExpression(ET_FUNC_CALL, $1, NULL, NULL, $2, 0, NULL, NULL); }
+                | IDENTIFIER '(' call_args_list ')'     { $$ = createExpression(ET_FUNC_CALL, $1, NULL, NULL, $3, 0, NULL, NULL); }
 
 call_args_list  : /*empty*/                           {$$=NULL;}
                 | args                                {$$=$1;}
 
 args            : expr                                { $$ = createList(LT_EXPR_ARRAY_INITIAL_ARGUMENTS, $1, NULL); }
-                |args ',' expr                        { $$ = appendToList($1, $3, NULL); }
+                | args ',' expr                        { $$ = appendToList($1, $3, NULL); }
 
 
 
 
-function_definition  :  DEF IDENTIFIER argdecl compstmt END
+function_definition  :  DEF IDENTIFIER  argdecl ENDL stmts END {createFuncDefStatement(struct Expression* identifier, struct List* params, struct Expression* returnType, struct List* suite)}
                       
 
-argdecl         :/**empty**/                         {$$=NULL;}
-                |'(' parameters ')'                  {$$=$2;}
-                | parameters term                    {$$=$1;}
+argdecl         :/**empty**/                          {$$=NULL;}
+                |'(' parameters ')' ENDL              {$$=$2;}
+				|'(' parameters ')'                   {$$=$2;}
+                | parameters ENDL                     {$$=$1;}
 
 
-parameters        :expr                           { $$ = createList(LT_EXPR_FUNCTION_PARAMS, $1, NULL); }
-               |parameters ',' expr               { $$ = appendToList($1, $3, NULL); }
+parameters        : IDENTIFIER                           { $$ = createList(LT_EXPR_FUNCTION_PARAMS, $1, NULL); }
+               | parameters ',' IDENTIFIER               { $$ = appendToList($1, $3, NULL); }
 
 
 %%
