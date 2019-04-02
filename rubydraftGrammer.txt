@@ -1,0 +1,21 @@
+// Ruby grammar written by Software Eng Ismail Adamu Ibrahim 
+
+program:    compound-statement;
+
+compound-statement: statement-list ? separator-list ?
+separator-list: separator +
+separator:   ;
+            |[line-terminator here]
+
+expression:  logical-expression
+            |method-invocation-expression 
+            |operator-expression
+            |primary-expresssion
+
+logical-expression: logical-NOT-expression
+                    |logical-AND-expression
+                    |logical-OR-expression
+
+operator-expression:  assignment-expression
+                     |defined?-without-parentheses
+                     |conditional-operator-expression

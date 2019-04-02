@@ -20,7 +20,24 @@
 
 extern int yylex(void);    // external variable
 
-void yyerror(char const *s);
+void yyerror(char const *s){
+
+  fprintf(stderr, "Line %d: %s\n", yylloc.first_line, s);
+  exit(1);
+}
+  struct Expression* createExpression(enum ExpressionType type, struct Expression* left, struct Expression* middle, struct Expression* right, struct List* exprs, int intVal, float floatVal, char* strVal, struct Expression* id);
+	struct Expression* createBaseTypeExpression(enum ExpressionType type, int intVal, float floatVal, char* strVal);
+	struct Expression* createBinaryExpression(enum ExpressionType type, struct Expression* left, struct Expression* right);
+	
+	struct List* createList(enum ExpressionListType type, struct Expression* expr, struct Statement* stmt);
+	struct List* appendToList(struct List* list, struct Expression* expr, struct Statement* stmt);
+	
+	struct Statement* createStatement(enum StatementType type, struct Expression* expr, struct List* firstSuite, struct List* secondSuite, struct List* thirdSuite, struct List* stmtList, struct Expression* identifier);
+	struct Statement* createFuncDefStatement(struct Expression* identifier, struct List* params, struct Expression* returnType, struct List* suite);
+	struct Statement* createConditionStatement(struct Expression* condition, struct List* ifSuite, struct List* elifs, struct List* elseSuite);
+	struct Statement* createWhileStatement(struct Expression* condition, struct List* mainSuite, struct List* elseSuite);
+	struct Statement* createReturnStatement(struct Expression* expr);
+	struct List* head;
 
 
 

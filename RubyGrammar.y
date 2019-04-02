@@ -19,8 +19,8 @@
 
   struct Statement* createStatement(enum StatementType type, struct Expression* expr, struct List* firstSuite, struct List* secondSuite, struct List* thirdSuite, struct List* stmtList, struct Expression* identifier);
 	struct Statement* createFuncDefStatement(struct Expression* identifier, struct List* params, struct Expression* returnType, struct List* suite);
-	struct Statement* createConditionStatement(struct Expression* condition, struct List* ifSuite, struct List* elifs, struct List* elseSuite);
-	struct Statement* createWhileStatement(struct Expression* condition, struct List* mainSuite, struct List* elseSuite);
+	struct Statement* createConditionExpression(struct Expression* condition, struct List* ifSuite, struct List* elifs, struct List* elseSuite);
+	struct Statement* createWhileExpression(struct Expression* condition, struct List* mainSuite, struct List* elseSuite);
 	struct Statement* createReturnStatement(struct Expression* expr);
 	struct List* head;
 
@@ -36,12 +36,13 @@
 }
 
 
-%start head
+%start program
 
 %token <int_value> INT_LITERAL
 %token <string_value> STRING_LITERAL
 %token <string_value> IDENTIFIER
 
+%type<stmts> stmt
 %type <stmt> statement
 %type <stmt> function_definition
 
@@ -71,7 +72,8 @@
 %token EL
 %token EQ
 %token NEQ
-%token END
+%token ENDL
+
 
 
 
@@ -96,7 +98,7 @@
 program         : stmts								  { $$ = head = $1; printf("START"); }
 
 stmts           :stmt                                 { $$ = createList(LT_STATEMENT_LIST, NULL, $1); }
-                |stmts terms stmt                     { $$ = appendToList($1, NULL, $2); }
+                |stmts terms stmt                     { $$ = appendToList($1, NULL, $3); }
 
 terms           : term
                 | terms term
@@ -155,11 +157,10 @@ expr            : INT_LITERAL                           { $$ = createBaseTypeExp
 
                 | expr '/' expr                        { $$ = createBinaryExpression(ET_DIV, $1, $3); }
                   
-                | tUMINUS expr                         {  $$ = createUnaryExpr(ET_UMINUS, $2);}
+                | '-' expr %prec tUMINUS                 {  $$ = createBinaryExpression(ET_UMINUS, $2,NULL);}
                   
-                | tUPLUS expr                          { $$ = createUnaryExpr(ET_UPLUS, $2);}
+                | '+' expr %prec tUPLUS                 { $$ = createBinaryExpression(ET_UPLUS, $2,NULL);}
                          
-
                 | command                              { $$=$1;}
 
                 | '(' expr ')'                     { $$=$2; }
@@ -195,7 +196,7 @@ args            : expr                                { $$ = createList(LT_EXPR_
 
 
 
-function_definition  :  DEF IDENTIFIER  argdecl ENDL stmts END {createFuncDefStatement(struct Expression* identifier, struct List* params, struct Expression* returnType, struct List* suite)}
+function_definition  :DEF IDENTIFIER  argdecl ENDL stmts END {$$=createFuncDefStatement(ET_FUNCTION_DEFINITION,$2, $3,$4);}
                       
 
 argdecl         :/**empty**/                          {$$=NULL;}
@@ -283,12 +284,12 @@ struct Statement* createFuncDefStatement(struct Expression* identifier, struct L
 }
 
 
-struct Statement* createConditionStatement(struct Expression* condition, struct List* ifSuite, struct List* elifs, struct List* elseSuite)
+struct Statement* createConditionExpression(struct Expression* condition, struct List* ifSuite, struct List* elifs, struct List* elseSuite)
 {
 	return createStatement(ST_CONDITION, condition, ifSuite, elseSuite, NULL, elifs, NULL);
 }
 
-struct Statement* createWhileStatement(struct Expression* condition, struct List* mainSuite, struct List* elseSuite)
+struct Statement* createWhileExpression(struct Expression* condition, struct List* mainSuite, struct List* elseSuite)
 {
 	return createStatement(ST_WHILE, condition, mainSuite, elseSuite, NULL, NULL, NULL);
 }
